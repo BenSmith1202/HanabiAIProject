@@ -5,9 +5,22 @@ import java.util.Set;
  * Tracks possible values for one unknown card
  */
 public class CardKnowledge {
+
+
+
+    public static final int UNKNOWN = 0;
+    public static final int SAVED = 1;
+    public static final int IMMEDIATELY_PLAYABLE = 2;
+    public int cardState = 0;
+
+
+
+
+
+
+
+
     private Set<Card> options;
-
-
     /**
      * Allow all possible cards
      */
@@ -62,6 +75,10 @@ public class CardKnowledge {
         options.removeIf(crd -> !(b.isLegalPlay(crd)));
     }
 
+
+
+
+
     /**
      * If there is only one color option for this card, return it
      * @return the color of the card, or -1 if it could be more than one color
@@ -76,6 +93,10 @@ public class CardKnowledge {
         }
         return color;
     }
+
+
+
+
 
     /**
      * If there is only one value option for this card, return it
