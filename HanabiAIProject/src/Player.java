@@ -156,6 +156,7 @@ public class Player {
 		// A really dumb agent that just discards
 		// TODO: replace this with your agent's decision-making code
 
+		//MAIN PSEUDOCODE
 
 		/*-=|CARD MARKERS|=-
     There are four card markers:
@@ -187,6 +188,59 @@ public class Player {
     Chop your oldest saved card
 		 */
 
+		// If the card in other player's chop position is endangered, save it.
+		if (otherPlayerHasEndangered()){
+			//hint at the endangered to save it
+			hintAtEndangered();
+			//return something
+		}
+
+		//else
+		//if I have a playable card, play it.
+
+		int playableIndex = iHavePlayable();
+		if (playableIndex >= 0){
+			//play card at playableIndex
+			playCard(playableIndex);
+			//return something
+		}
+
+		//else
+		//if the other player has a playable card
+
+		int otherPlayableIndex = otherPlayerHasPlayable();
+		if (otherPlayableIndex >= 0){
+			//if I can hint at it without collateral, hint at it
+			if (getMinimumCluedCards(otherPlayableIndex) == 1){
+				//hint specifically at the playable card and no others
+				hintAtOthersPlayable(otherPlayableIndex);
+				//return something
+			}
+		}
+
+		//else
+		// if I have at least one unknown card, chop the one in the chopping position.
+
+		int chopIndex = canIChopUnknown();
+		if (chopIndex >= 0){
+			//chop it
+			chop(chopIndex);
+		}
+
+		//else
+		// if I have only saved cards, chop the oldest
+
+		chopIndex = getOldestSavedIndex();
+		if (chopIndex >= 0)
+		{
+			//chop it
+			chop(chopIndex);
+		}
+
+		//else
+		// Something went wrong, I should never be here.
+
+
 
 		if(boardState.numFuses == 0) {
 			return "DISCARD 0 0";
@@ -198,5 +252,113 @@ public class Player {
 
 		return "DISCARD 0 0";
 	}
+
+
+	/**
+	 *
+	 * @return True if the other player should save their chop card.
+	 */
+	private boolean otherPlayerHasEndangered()
+	{
+
+		return false;
+	}
+
+	/**
+	 * Hints at endangered card in other player's hand using with the minimum collateral
+	 */
+	private void hintAtEndangered()
+	{
+		//hints at endangered card using TELL command
+	}
+
+	/**
+	 *
+	 * @return integer of card that I should play, or -1 for none.
+	 */
+	private int iHavePlayable()
+	{
+
+		return -1;
+	}
+
+	/**
+	 * Plays a card from my hand at a certain index.
+	 * @param index the index of the card you want to play.
+	 */
+	private void playCard(int index)
+	{
+		// play the card using the PLAY command
+	}
+
+	/**
+	 *
+	 * @return index of a card which could be played onto the tableau right now in the other player's hand.
+	 * Returns -1 if no cards are playable.
+	 */
+	private int otherPlayerHasPlayable()
+	{
+
+		return -1;
+	}
+
+	/**
+	 * Hints specifically at one and only one of your opponents cards.
+	 * @param index the index of the card you want to hint at
+	 */
+	private void hintAtOthersPlayable(int index)
+	{
+
+	}
+
+	/**
+	 *
+	 * @return the minimum number of cards that could be hinted at with a hint that includes i
+	 * in other words, if i want to hint i, how few other cards can i collaterally hint at.
+	 * If i return 1, then i can hint at the given card alone.
+	 * Returns -1 in case of failure.
+	 * @param cardIndex The index of the card in the other player's hand that i want to hint at.
+	 */
+	private int getMinimumCluedCards(int cardIndex)
+	{
+
+		return -1;
+	}
+
+
+	/**
+	 *
+	 * @return the index of the chop card, or -1 if there are no unknown cards.
+	 */
+	private int canIChopUnknown()
+	{
+
+		return -1;
+	}
+
+	/**
+	 *
+	 * Attempts to chop the card at the chop position.
+	 * @return false if chopping failed.
+	 * @param index index of card to chop
+	 */
+	private boolean chop(int index)
+	{
+
+		System.out.println("Chopping failed");
+		return false;
+	}
+
+	/**
+	 *
+	 * @return the index of the longest ago saved card in your hand, or -1 for no saved cards.
+	 */
+	private int getOldestSavedIndex()
+	{
+
+		return -1; //THIS IS A GAME LOSS
+	}
+
+
 
 }
