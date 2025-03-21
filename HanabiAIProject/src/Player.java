@@ -10,13 +10,25 @@ public class Player {
 	// different instances of this class by any means; doing so will result in a score of 0.
 
 
-	/**
-	 * This default constructor should be the only constructor you supply.
-	 */
-	public Player() {
+	private ArrayList<CardKnowledge> cardKnowledges; // Tracks knowledge about cards in the player's hand
+	private ArrayList<CardKnowledge> PartnerCardKnowledges; // Tracks knowledge about cards in the partner's hand
+	private int handSize; // Tracks the size of the player's hand
 
+	public Player() {
+		cardKnowledges = new ArrayList<>();
+		PartnerCardKnowledges = new ArrayList<>();
+		// Initialize the cardKnowledges list with 5 CardKnowledge objects, all with cardState = 0
+		for (int i = 0; i < 5; i++) {
+			CardKnowledge ck = new CardKnowledge();
+			ck.cardState = CardKnowledge.UNKNOWN; // Set cardState to 0 (unknown)
+			cardKnowledges.add(ck);
+			CardKnowledge c2 = new CardKnowledge();
+			c2.cardState = CardKnowledge.UNKNOWN;
+			PartnerCardKnowledges.add(c2); // Initialize partner's card knowledge
+		}
+		handSize = 0;
 	}
-	
+
 	/**
 	 * This method runs whenever your partner discards a card.
 	 * @param startHand The hand your partner started with before discarding.
@@ -27,12 +39,18 @@ public class Player {
 	 * @param finalHand The hand your partner ended with after redrawing.
 	 * @param boardState The state of the board after play.
 	 */
-	public void tellPartnerDiscard(Hand startHand, Card discard, int disIndex, Card draw, int drawIndex, 
+	public void tellPartnerDiscard(Hand startHand, Card discard, int disIndex, Card draw, int drawIndex,
 			Hand finalHand, Board boardState) {
 		// update my card knowledge
 
+		// Update partner's card knowledge
+		PartnerCardKnowledges.remove(disIndex); // Remove the discarded card
+		if (draw != null) {
+			PartnerCardKnowledges.add(drawIndex, new CardKnowledge()); // Add new card knowledge for the drawn card
+		}
+
 	}
-	
+
 	/**
 	 * This method runs whenever you discard a card, to let you know what you discarded.
 	 * @param discard The card you discarded.
@@ -44,12 +62,17 @@ public class Player {
 	public void tellYourDiscard(Card discard, int disIndex, int drawIndex, boolean drawSucceeded, Board boardState) {
 
 		// update my card knowledge with the card (increase the count of the card)
+		cardKnowledges.remove(disIndex);
+		if (drawSucceeded) {
+			cardKnowledges.add(drawIndex, new CardKnowledge());
+		}
+
 	}
 
 
 
 
-	
+
 	/**
 	 * This method runs whenever your partner played a card
 	 * @param startHand The hand your partner started with before playing.
@@ -64,7 +87,11 @@ public class Player {
 	public void tellPartnerPlay(Hand startHand, Card play, int playIndex, Card draw, int drawIndex,
 			Hand finalHand, boolean wasLegalPlay, Board boardState) {
 
-		// take any saved cards that were equal to that and unsave them
+		// Update partner's card knowledge
+		PartnerCardKnowledges.remove(playIndex); // Remove the played card
+		if (draw != null) {
+			PartnerCardKnowledges.add(drawIndex, new CardKnowledge()); // Add new card knowledge for the drawn card
+		}
 
 	}
 
@@ -74,7 +101,7 @@ public class Player {
 
 
 
-	
+
 	/**
 	 * This method runs whenever you play a card, to let you know what you played.
 	 * @param play The card you played.
@@ -87,10 +114,12 @@ public class Player {
 	public void tellYourPlay(Card play, int playIndex, int drawIndex, boolean drawSucceeded,
 							 boolean wasLegalPlay, Board boardState) {
 		// ???
+		cardKnowledges.remove(playIndex);
+		if (drawSucceeded) {
+			cardKnowledges.add(drawIndex, new CardKnowledge());
+		}
+
 	}
-
-
-
 
 
 
@@ -108,12 +137,21 @@ public class Player {
 		//  if the hint was about chop = save that card
 		// if the hint was about one card not in chop = play that card
 		// if the hint was about multiple cards including chop, only save the chop, ignore others
+
+		if (isChopForHint(indices)) {
+			// Only set the chop card to SAVED (cardState = 1)
+			int chopIndex = indices.get(indices.size() - 1);
+			cardKnowledges.get(chopIndex).cardState = CardKnowledge.SAVED;
+		} else if (indices.size() == 1) {
+			// If the hint includes only one card, set it to IMMEDIATELY_PLAYABLE (cardState = 2)
+			cardKnowledges.get(indices.get(0)).cardState = CardKnowledge.IMMEDIATELY_PLAYABLE;
+		}
 	}
 
 
 
 
-	
+
 	/**
 	 * This method runs whenever your partner gives you a hint as to the numbers on your cards.
 	 * @param number The number hinted, from 1-5.
@@ -125,13 +163,102 @@ public class Player {
 		//  if the hint was about chop = save that card
 		// if the hint was about one card not in chop = play that card
 		// if the hint was about multiple cards including chop, only save the chop, ignore others
+
+		if (isChopForHint(indices)) {
+			// Only set the chop card to SAVED (cardState = 1)
+			int chopIndex = indices.get(indices.size() - 1);
+
+
+			//possibly check if this number for each color is boardstate.isPlayable,
+			//if it is, then set it to immediately playable
+
+			if(number == 1){
+				cardKnowledges.get(chopIndex).cardState = CardKnowledge.IMMEDIATELY_PLAYABLE;
+			} else if(number == 2){
+
+				boolean check = false;
+				for(int i = 0; i < 5; i++){
+					if(boardState.tableau.get(i) >= 1){
+						check = true;
+					}
+					else{
+						check = false;
+					}
+				}
+				if(check){
+					cardKnowledges.get(chopIndex).cardState = CardKnowledge.IMMEDIATELY_PLAYABLE;
+				}
+				else{
+					cardKnowledges.get(chopIndex).cardState = CardKnowledge.SAVED;
+				}
+			} else if (number == 3){
+				boolean check = false;
+				for(int i = 0; i < 5; i++){
+					if(boardState.tableau.get(i) >= 2){
+						check = true;
+					}
+					else{
+						check = false;
+					}
+				}
+				if(check){
+					cardKnowledges.get(chopIndex).cardState = CardKnowledge.IMMEDIATELY_PLAYABLE;
+				}
+				else{
+					cardKnowledges.get(chopIndex).cardState = CardKnowledge.SAVED;
+				}
+			}
+			else{
+				cardKnowledges.get(chopIndex).cardState = CardKnowledge.SAVED;
+			}
+
+
+		} else if (indices.size() == 1) {
+			// If the hint includes only one card, set it to IMMEDIATELY_PLAYABLE (cardState = 2)
+			cardKnowledges.get(indices.get(0)).cardState = CardKnowledge.IMMEDIATELY_PLAYABLE;
+		} else if(number == 1){
+			for(int i = 0; i < indices.size(); i++){
+				cardKnowledges.get(indices.get(i)).cardState = CardKnowledge.IMMEDIATELY_PLAYABLE;
+			}
+		}
+
+	}
+
+
+	// Helper method to check if a card is the chop card
+	private boolean isChopForHint(ArrayList<Integer> indices) {
+		int chopIndex = 4;
+		for(int i = handSize - 1; i >= 0; i--){
+			if(cardKnowledges.get(i).cardState == CardKnowledge.UNKNOWN){
+				chopIndex = i;
+				break;
+			}
+		}
+		int highestIndex = indices.get(indices.size() - 1);
+		if(highestIndex == chopIndex){
+			return true;
+		}
+		else{
+			return false;
+		}
+		//return cardKnowledges.get(highestIndex).cardState == CardKnowledge.UNKNOWN;
 	}
 
 
 
 
 
-	
+
+
+
+
+
+
+	// THIS IS THE ASK METHOD
+
+
+
+
 	/**
 	 * This method runs when the game asks you for your next move.
 	 * @param yourHandSize How many cards you have in hand.
@@ -153,211 +280,243 @@ public class Player {
 	 *     his cards have that color, or if no hints remain. This command consumes a hint.
 	 */
 	public String ask(int yourHandSize, Hand partnerHand, Board boardState) {
-		// A really dumb agent that just discards
-		// TODO: replace this with your agent's decision-making code
 
-		//MAIN PSEUDOCODE
 
-		/*-=|CARD MARKERS|=-
-    There are four card markers:
-    -  UNKNOWN cards are cards which have NOT been hinted at yet.
-    -  The leftmost UNKNOWN card is the CHOP card
-    -  if the CHOP card is hinted at (even if hinted at as part of a multi hint) is becomes SAVED
-    -  if a SAVED or UNKNOWN card is hinted at (by itself) it is IMMEDIATELY_PLAYABLE.
-      IMMEDIATELY_PLAYABLE cards are valid to play onto the stacks right now.
+		handSize = yourHandSize;
 
-    Additionally, if there is only one card of a certain type left in play (out of the discard pile), and
-     it has not been played yet, it is ENDANGERED.
+//
+//		//if its the end of the game, play one of your saved cards
+//		if(boardState.deckSize <= 2 && boardState.numFuses > 1){
+//			for(int i = 0; i < cardKnowledges.size(); i++){
+//				if(cardKnowledges.get(i).cardState == CardKnowledge.SAVED){
+//					return "PLAY " + i + " 0";
+//				}
+//			}
+//		}
 
-    -=|STRATEGY|=-
-    Flow of play:
-
-    If you see any ENDANGERED cards on another player's CHOP position ->
-      Hint at it with the fewest collateral cards possible (hint as few cards other than the chop as you can)
-    Else:
-    If you have a card marked IMMEDIATELY_PLAYABLE ->
-      play it!
-    Else:
-    If another player has a card that they should mark IMMEDIATELY_PLAYABLE ->
-      If you can hint at that card alone (no collateral) ->
-        Hint at the card
-    Else:
-    If you have an unknown card in the CHOP position ->
-      Discard the card in your Chop position.
-    Else:
-    Chop your oldest saved card
-		 */
-
-		// If the card in other player's chop position is endangered, save it.
-		if (otherPlayerHasEndangered()){
-			//hint at the endangered to save it
-			hintAtEndangered();
-			//return something
-		}
-
-		//else
-		//if I have a playable card, play it.
-
-		int playableIndex = iHavePlayable();
-		if (playableIndex >= 0){
-			//play card at playableIndex
-			playCard(playableIndex);
-			//return something
-		}
-
-		//else
-		//if the other player has a playable card
-
-		int otherPlayableIndex = otherPlayerHasPlayable();
-		if (otherPlayableIndex >= 0){
-			//if I can hint at it without collateral, hint at it
-			if (getMinimumCluedCards(otherPlayableIndex) == 1){
-				//hint specifically at the playable card and no others
-				hintAtOthersPlayable(otherPlayableIndex);
-				//return something
+		if(boardState.numHints > 0){
+			// Check for endangered cards first
+			String endangeredAction = checkForEndangered(partnerHand, boardState);
+			if (endangeredAction != null) {
+				return endangeredAction;
 			}
 		}
 
-		//else
-		// if I have at least one unknown card, chop the one in the chopping position.
 
-		int chopIndex = canIChopUnknown();
-		if (chopIndex >= 0){
-			//chop it
-			chop(chopIndex);
-		}
-
-		//else
-		// if I have only saved cards, chop the oldest
-
-		chopIndex = getOldestSavedIndex();
-		if (chopIndex >= 0)
-		{
-			//chop it
-			chop(chopIndex);
-		}
-
-		//else
-		// Something went wrong, I should never be here.
-
-
-
-		if(boardState.numFuses == 0) {
-			return "DISCARD 0 0";
+// Check if the player can play a card
+		String playAction = canIPlay();
+		if (playAction != null) {
+			return playAction;
 		}
 
 
 
+
+
+
+
+
+		if(boardState.numHints > 0){
+			// Check for playable cards in partner's hand
+			String playableAction = checkForPlayable(partnerHand, boardState);
+			if (playableAction != null) {
+				return playableAction;
+			}
+		}
+
+
+
+		// Discard the highest-indexed unknown card (chop)
+		String discardAction = chop();
+		if (discardAction != null) {
+			return discardAction;
+		}
 
 
 		return "DISCARD 0 0";
 	}
 
 
-	/**
-	 *
-	 * @return True if the other player should save their chop card.
-	 */
-	private boolean otherPlayerHasEndangered()
-	{
 
+	//THIS IS THE ASK METHOD
+
+
+
+
+	// Helper method to check if a card is endangered
+	private boolean isEndangered(Card card, Board boardState) {
+		int count = 0;
+		for (Card discardedCard : boardState.discards) {
+			if (discardedCard.equals(card)) {
+				count++;
+			}
+		}
+
+
+////NEW, GOES FOR RULE THAT 2 IS VALUABLE SO SAVE THEM
+//		if(card.value == 2){
+//			if(boardState.tableau.get(card.color) <= 1){
+//				return true;
+//			}
+//		}
+
+
+
+		if (card.value == 1 && count >= 2) {
+			return true;
+		} else if ((card.value == 2 || card.value == 3 || card.value == 4) && count >= 1) {
+			return true;
+		} else if (card.value == 5) {
+			return true;
+		}
 		return false;
 	}
 
-	/**
-	 * Hints at endangered card in other player's hand using with the minimum collateral
-	 */
-	private void hintAtEndangered()
-	{
-		//hints at endangered card using TELL command
-	}
+	// Helper method to determine whether to hint color or number for an endangered card
+	private String makeEndangeredHint(Card endangeredCard, Hand partnerHand) {
+		int colorMatches = 0;
+		int numberMatches = 0;
+		for (int i = 0; i < partnerHand.size(); i++) {
+			Card partnerCard = partnerHand.get(i);
+			if (partnerCard.color == endangeredCard.color) {
+				colorMatches++;
+				//System.out.println("Color match: " + partnerCard + " " + endangeredCard); // Debugging
+			}
+			if (partnerCard.value == endangeredCard.value) {
+				numberMatches++;
+				//System.out.println("Number match: " + partnerCard + " " + endangeredCard); // Debugging
+			}
+		}
 
-	/**
-	 *
-	 * @return integer of card that I should play, or -1 for none.
-	 */
-	private int iHavePlayable()
-	{
 
-		return -1;
-	}
-
-	/**
-	 * Plays a card from my hand at a certain index.
-	 * @param index the index of the card you want to play.
-	 */
-	private void playCard(int index)
-	{
-		// play the card using the PLAY command
-	}
-
-	/**
-	 *
-	 * @return index of a card which could be played onto the tableau right now in the other player's hand.
-	 * Returns -1 if no cards are playable.
-	 */
-	private int otherPlayerHasPlayable()
-	{
-
-		return -1;
-	}
-
-	/**
-	 * Hints specifically at one and only one of your opponents cards.
-	 * @param index the index of the card you want to hint at
-	 */
-	private void hintAtOthersPlayable(int index)
-	{
+		// Hint the attribute (color or number) that has fewer matches
+		if (numberMatches <= colorMatches) {
+			return "NUMBERHINT " + endangeredCard.value;
+		} else {
+			return "COLORHINT " + endangeredCard.color;
+		}
 
 	}
 
-	/**
-	 *
-	 * @return the minimum number of cards that could be hinted at with a hint that includes i
-	 * in other words, if i want to hint i, how few other cards can i collaterally hint at.
-	 * If i return 1, then i can hint at the given card alone.
-	 * Returns -1 in case of failure.
-	 * @param cardIndex The index of the card in the other player's hand that i want to hint at.
-	 */
-	private int getMinimumCluedCards(int cardIndex)
-	{
 
-		return -1;
+
+
+	// Helper method to determine whether to hint color or number for a card
+	private String makeNormalHint(Card card, Hand partnerHand) {
+		int colorMatches = 0;
+		int numberMatches = 0;
+		for (int i = 0; i < partnerHand.size(); i++) {
+			Card partnerCard = partnerHand.get(i);
+			if (partnerCard.color == card.color) {
+				colorMatches++;
+				//System.out.println("Color match: " + partnerCard + " " + endangeredCard); // Debugging
+			}
+			if (partnerCard.value == card.value) {
+				numberMatches++;
+				//System.out.println("Number match: " + partnerCard + " " + endangeredCard); // Debugging
+			}
+		}
+
+
+		// Hint the attribute (color or number) that has fewer matches
+		if (numberMatches <= 1) {
+			return "NUMBERHINT " + card.value;
+		} else if (colorMatches <= 1) {
+			return "COLORHINT " + card.color;
+		}
+
+		//maybe use flag here for doubles
+//		//loop through all the cards in partner's hand, if color AND number matches twice, grab both indexes
+//		//send in a hint for the number they share
+//		int count = 0;
+//		for(int i = 0; i < partnerHand.size(); i++){
+//			Card partnerCard = partnerHand.get(i);
+//			if(partnerCard.color == card.color && partnerCard.value == card.value){
+//				count++;
+//			}
+//		}
+//		if(count >= 2){
+//			return "NUMBERHINT " + card.value;
+//		}
+
+		//THIS WOULD BE IF WE WANT TO HINT FOR MANY 1s
+//		if(card.value == 1){
+//			return "NUMBERHINT " + card.value;
+//		}
+
+		return null; // No hint needed
 	}
 
 
-	/**
-	 *
-	 * @return the index of the chop card, or -1 if there are no unknown cards.
-	 */
-	private int canIChopUnknown()
-	{
 
-		return -1;
+
+	// First ask method: Check for endangered cards in partner's hand
+	private String checkForEndangered(Hand partnerHand, Board boardState) {
+		for (int i = partnerHand.size() - 1; i >= 0; i--) {
+			Card partnerCard = partnerHand.get(i);
+
+			if(PartnerCardKnowledges.get(i).cardState == CardKnowledge.UNKNOWN){
+				if (isEndangered(partnerCard, boardState)) {
+					PartnerCardKnowledges.get(i).cardState = CardKnowledge.SAVED;
+
+					String hint = makeEndangeredHint(partnerCard, partnerHand);
+					if (hint != null) {
+						return hint;
+					}
+				}
+				else{
+					break;
+				}
+			}
+
+		}
+		return null; // No endangered cards found
 	}
 
-	/**
-	 *
-	 * Attempts to chop the card at the chop position.
-	 * @return false if chopping failed.
-	 * @param index index of card to chop
-	 */
-	private boolean chop(int index)
-	{
 
-		System.out.println("Chopping failed");
-		return false;
+	// Second ask method: Check if the player can play a card
+	private String canIPlay() {
+		for (int i = 0; i < cardKnowledges.size(); i++) {
+			if (cardKnowledges.get(i).cardState == CardKnowledge.IMMEDIATELY_PLAYABLE) {
+				return "PLAY " + i + " 0";
+			}
+		}
+		return null; // No immediately playable cards
 	}
 
-	/**
-	 *
-	 * @return the index of the longest ago saved card in your hand, or -1 for no saved cards.
-	 */
-	private int getOldestSavedIndex()
-	{
 
-		return -1; //THIS IS A GAME LOSS
+	// Third ask method: Check for playable cards in partner's hand
+	private String checkForPlayable(Hand partnerHand, Board boardState) {
+		for (int i = 0; i < partnerHand.size(); i++) {
+			Card partnerCard = partnerHand.get(i);
+			//System.out.println("Checking for playable card: " + partnerCard);
+			if (boardState.isLegalPlay(partnerCard)) {
+				//System.out.println("Found playable card: " + partnerCard);
+				String hint = makeNormalHint(partnerCard, partnerHand);
+				if (hint != null) {
+					//System.out.println("Hinting at playable card: " + partnerCard);
+					PartnerCardKnowledges.get(i).cardState = CardKnowledge.IMMEDIATELY_PLAYABLE;
+					return hint;
+				}
+			}
+		}
+		return null; // No playable cards found
 	}
+
+
+	// Fourth ask method: Discard the highest-indexed unknown card (chop)
+	private String chop() {
+		for (int i = handSize - 1; i >= 0; i--) {
+			if (cardKnowledges.get(i).cardState == CardKnowledge.UNKNOWN) {
+				return "DISCARD " + i + " 0";
+			}
+		}
+		return null; // No unknown cards to discard
+	}
+
+
+
+
 
 
 

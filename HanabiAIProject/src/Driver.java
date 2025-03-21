@@ -2,8 +2,14 @@
 public class Driver {
 	public static void main(String[] args) {
 		// TODO: Change from ConsolePlayer to Player after you have an implementation
+//		for(int i = 0; i < 10; i++) {
+//			Hanabi game = new Hanabi(true, new Player(), new Player());
+//			game.play();
+//		}
 		Hanabi game = new Hanabi(true, new Player(), new Player());
 		game.play();
+
+		System.out.println(simulateGames(1000, false));
 	}
 
 	/**
