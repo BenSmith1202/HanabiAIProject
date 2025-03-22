@@ -9,7 +9,7 @@ public class Driver {
 		Hanabi game = new Hanabi(true, new Player(), new Player());
 		game.play();
 
-		System.out.println(simulateGames(1000, false));
+		System.out.println(simulateGames(10000, false));
 	}
 
 	/**
