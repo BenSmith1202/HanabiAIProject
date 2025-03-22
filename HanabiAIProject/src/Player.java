@@ -3,7 +3,8 @@ import java.util.HashSet;
 
 
 /**
- * @author You
+ * @author David Olinger AND Ben Smith
+ * we worked on this project together and are turning in identical code
  *
  */
 public class Player {
